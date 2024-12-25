@@ -15,7 +15,15 @@ export const messages = {
       saveFailed: '保存失败',
       deleteFailed: '删除失败',
       confirmDelete: '确定要删除这个生日吗？'
-    }
+    },
+    notesPlaceholder: '添加备注信息（可选）',
+    name: '姓名',
+    birthDate: '生日日期',
+    notes: '备注',
+    pleaseCompleteForm: '请填写必填字段',
+    save: '保存',
+    add: '添加',
+    cancel: '取消'
   },
   en: {
     birthday: {
@@ -33,9 +41,17 @@ export const messages = {
       saveFailed: 'Failed to save',
       deleteFailed: 'Failed to delete',
       confirmDelete: 'Are you sure you want to delete this birthday?'
-    }
+    },
+    notesPlaceholder: 'Add notes (optional)',
+    name: 'Name',
+    birthDate: 'Birth Date',
+    notes: 'Notes',
+    pleaseCompleteForm: 'Please complete required fields',
+    save: 'Save',
+    add: 'Add',
+    cancel: 'Cancel'
   }
 };
 
 export type Locale = 'zh' | 'en';
-export type MessageKey = keyof typeof messages.zh.birthday; 
+export type MessageKey = keyof typeof messages.zh.birthday | keyof typeof messages.zh;

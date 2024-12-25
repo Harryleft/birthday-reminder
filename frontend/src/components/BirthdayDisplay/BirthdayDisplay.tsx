@@ -90,32 +90,22 @@ export const BirthdayDisplay: React.FC<Props> = ({ birthday, daysUntil }) => {
   };
 
   const formatDate = () => {
-    if (birthday.type === 'lunar' && birthday.lunar_date) {
-      const month = birthday.lunar_date.month || 1;
-      const day = birthday.lunar_date.day || 1;
-      
-      // 转换为今年的公历日期显示
-      const lunar = Lunar.fromYmd(new Date().getFullYear(), month, day);
-      const solar = lunar.getSolar();
-      const solarMonth = solar.getMonth();
-      const solarDay = solar.getDay();
+    try {
+      const { lunar_date, solar_date } = birthday;
+      if (!lunar_date || !solar_date) {
+        return '';
+      }
+      if (!lunar_date.month || !lunar_date.day || !solar_date.month || !solar_date.day) {
+        return '';
+      }
       
       return locale === 'zh'
-        ? t('date', { month: solarMonth, day: solarDay })
-        : new Date(0, solarMonth - 1, solarDay)
-            .toLocaleDateString(locale, { month: 'long', day: 'numeric' });
-    } else if (birthday.type === 'solar' && birthday.solar_date) {
-      const month = birthday.solar_date.month || 1;
-      const day = birthday.solar_date.day || 1;
-      
-      return locale === 'zh' 
-        ? t('date', { month, day })
-        : new Date(0, month - 1, day).toLocaleDateString(locale, { 
-            month: 'long', 
-            day: 'numeric' 
-          });
+        ? `农历 ${lunar_date.month}月${lunar_date.day}日 (公历 ${solar_date.month}月${solar_date.day}日)`
+        : `Lunar ${lunar_date.month}/${lunar_date.day} (Solar ${solar_date.month}/${solar_date.day})`;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
     }
-    return '';
   };
 
   return (

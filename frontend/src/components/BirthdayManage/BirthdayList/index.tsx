@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Birthday } from '../../../types';
-import { BirthdayItem } from './BirthdayItem';
+import { BirthdayItem } from './BirthdayItem/index';
 import { useI18n } from '../../../hooks/useI18n';
 
 const ListContainer = styled.div`
@@ -20,8 +20,7 @@ const EmptyState = styled.div`
 
 const Header = styled.div`
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-end;
   margin-bottom: 16px;
 `;
 
@@ -48,7 +47,7 @@ interface Props {
   birthdays: Birthday[];
   onAdd: () => void;
   onEdit: (birthday: Birthday) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string | undefined) => void;
 }
 
 export const BirthdayList: React.FC<Props> = ({
@@ -62,7 +61,6 @@ export const BirthdayList: React.FC<Props> = ({
   return (
     <>
       <Header>
-        <Title>{t('title')}</Title>
         <AddButton onClick={onAdd}>{t('addBirthday')}</AddButton>
       </Header>
       <ListContainer>
@@ -74,7 +72,7 @@ export const BirthdayList: React.FC<Props> = ({
               key={birthday.id}
               birthday={birthday}
               onEdit={() => onEdit(birthday)}
-              onDelete={() => onDelete(birthday.id)}
+              onDelete={() => birthday.id && onDelete(birthday.id)}
             />
           ))
         )}

@@ -10,14 +10,46 @@ export const BirthdayService = {
     return response.data;
   },
 
-  addBirthday: async (birthday: Omit<Birthday, 'id'>): Promise<Birthday> => {
-    const response = await axios.post(`${API_BASE_URL}/birthday/add`, birthday);
-    return response.data;
+  addBirthday: async (data: Omit<Birthday, 'id'>) => {
+    const response = await fetch('/api/birthday/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: data.name,
+        birth_date: data.birth_date,
+        notes: data.notes || '',
+        type: data.type,
+        lunar_date: data.lunar_date,
+        solar_date: data.solar_date
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to add birthday');
+    }
+    return response.json();
   },
 
-  updateBirthday: async (id: string, birthday: Partial<Birthday>): Promise<Birthday> => {
-    const response = await axios.put(`${API_BASE_URL}/birthday/update/${id}`, birthday);
-    return response.data;
+  updateBirthday: async (id: string, data: Partial<Birthday>) => {
+    const response = await fetch(`/api/birthday/update/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: data.name,
+        birth_date: data.birth_date,
+        notes: data.notes || '',
+        type: data.type,
+        lunar_date: data.lunar_date,
+        solar_date: data.solar_date
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update birthday');
+    }
+    return response.json();
   },
 
   deleteBirthday: async (id: string): Promise<void> => {

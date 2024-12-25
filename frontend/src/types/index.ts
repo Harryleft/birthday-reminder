@@ -6,15 +6,16 @@ export interface LunarDate {
 
 export interface SolarDate {
   year: number | null;
-  month: number | null;
-  day: number | null;
+  month: number;
+  day: number;
 }
 
 export interface Birthday {
-  id: string;
+  id?: string;
   name: string;
-  lunar_date: LunarDate;
-  solar_date: SolarDate;
-  type: 'lunar' | 'solar';
+  type: 'lunar';
+  lunar_date?: LunarDate;
+  solar_date?: SolarDate;
+  birth_date: string;
   notes?: string;
 }

@@ -1,59 +1,97 @@
-import React, { useEffect, useState } from 'react';
-import { ThemeProvider } from 'styled-components';
-import { GlobalStyles } from './styles/GlobalStyles';
-import { theme } from './styles/theme';
+import React, { useState, useEffect } from 'react';
 import { BirthdayDisplay } from './components/BirthdayDisplay/BirthdayDisplay';
-import { ManageButton } from './components/ManageButton/ManageButton';
-import { BirthdayService } from './services/api';
-import { DateCalculator } from './utils/dateUtils';
-import { Birthday } from './types';
+import { ManageButton } from './components/ManageButton/index';
 import { BirthdayManage } from './components/BirthdayManage';
+import { GlobalStyles } from './styles/GlobalStyles';
+import { ThemeProvider } from 'styled-components';
+import { theme } from './styles/theme';
+import { useBirthdays } from './hooks/useBirthdays';
+import { Birthday } from './types';
+import { Lunar } from 'lunar-typescript';
 
 export const App: React.FC = () => {
-  const [nextBirthday, setNextBirthday] = useState<Birthday | null>(null);
-  const [daysUntil, setDaysUntil] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
+  const { birthdays, refetch } = useBirthdays();
+  const [nextBirthday, setNextBirthday] = useState<Birthday | null>(null);
+  const [daysUntil, setDaysUntil] = useState(0);
 
-  useEffect(() => {
-    const fetchBirthdays = async () => {
+  const calculateNextBirthday = (birthdays: Birthday[]) => {
+    if (!birthdays.length) return;
+
+    const today = new Date();
+    let nearestBirthday: Birthday | null = null;
+    let minDays = Infinity;
+
+    birthdays.forEach(birthday => {
       try {
-        setLoading(true);
-        const birthdays = await BirthdayService.getAllBirthdays();
-        const next = DateCalculator.getNextBirthday(birthdays);
-        if (next) {
-          setNextBirthday(next.birthday);
-          setDaysUntil(next.daysUntil);
+        if (!birthday.lunar_date?.month || !birthday.lunar_date?.day) return;
+
+        const currentLunar = Lunar.fromDate(today);
+        const currentYear = currentLunar.getYear();
+        
+        const thisYearLunar = Lunar.fromYmd(currentYear, birthday.lunar_date.month, birthday.lunar_date.day);
+        const thisYearSolar = thisYearLunar.getSolar();
+        
+        const nextDate = new Date(
+          thisYearSolar.getYear(),
+          thisYearSolar.getMonth() - 1,
+          thisYearSolar.getDay()
+        );
+
+        if (nextDate < today) {
+          const nextYearLunar = Lunar.fromYmd(currentYear + 1, birthday.lunar_date.month, birthday.lunar_date.day);
+          const nextYearSolar = nextYearLunar.getSolar();
+          nextDate.setFullYear(nextYearSolar.getYear());
+          nextDate.setMonth(nextYearSolar.getMonth() - 1);
+          nextDate.setDate(nextYearSolar.getDay());
+        }
+
+        const days = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (days < minDays) {
+          minDays = days;
+          nearestBirthday = {
+            ...birthday,
+            solar_date: {
+              year: nextDate.getFullYear(),
+              month: nextDate.getMonth() + 1,
+              day: nextDate.getDate()
+            }
+          };
         }
       } catch (error) {
-        console.error('Failed to fetch birthdays:', error);
-        setError('无法加载生日信息');
-      } finally {
-        setLoading(false);
+        console.error('Error calculating birthday:', error);
       }
-    };
+    });
 
-    fetchBirthdays();
-    // 每天更新一次
-    const interval = setInterval(fetchBirthdays, 24 * 60 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+    if (nearestBirthday) {
+      setNextBirthday(nearestBirthday);
+      setDaysUntil(minDays);
+    }
+  };
 
-  const handleManage = () => {
-    setIsManageOpen(true);
+  useEffect(() => {
+    calculateNextBirthday(birthdays);
+  }, [birthdays]);
+
+  const handleManageClose = async () => {
+    setIsManageOpen(false);
+    await refetch();  // 关闭管理界面时刷新数据
   };
 
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
-      {loading && <div>加载中...</div>}
-      {error && <div>错误: {error}</div>}
-      {nextBirthday && <BirthdayDisplay birthday={nextBirthday} daysUntil={daysUntil} />}
-      <ManageButton onClick={handleManage} isManageOpen={isManageOpen} />
-      <BirthdayManage 
-        isOpen={isManageOpen} 
-        onClose={() => setIsManageOpen(false)} 
+      {nextBirthday && (
+        <BirthdayDisplay
+          birthday={nextBirthday}
+          daysUntil={daysUntil}
+        />
+      )}
+      <ManageButton onClick={() => setIsManageOpen(true)} />
+      <BirthdayManage
+        isOpen={isManageOpen}
+        onClose={handleManageClose}
       />
     </ThemeProvider>
   );

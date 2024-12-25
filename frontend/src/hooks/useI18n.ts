@@ -6,7 +6,10 @@ export function useI18n() {
   const [locale, setLocale] = useState<Locale>('zh');
 
   const t = (key: MessageKey, params?: Record<string, string | number>) => {
-    let text = messages[locale].birthday[key];
+    let text = (key in messages[locale].birthday 
+      ? messages[locale].birthday[key as keyof typeof messages.zh.birthday]
+      : messages[locale][key as keyof typeof messages.zh]) as string;
+      
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         text = text.replace(`{${key}}`, String(value));
